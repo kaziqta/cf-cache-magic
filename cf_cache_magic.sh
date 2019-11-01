@@ -1,10 +1,14 @@
 #!/bin/bash
 
 #### Removal of page cache
-find /path/to/cache -type f -type d -delete
+#find /path/to/cache -type f -type d -delete
 
 #### Sitemap to be crawled
 sitemap="https://domain.com/sitemap_index.xml"
+domain=$(echo "$sitemap" | awk -F/ '{print $3}')
+
+#### Write the IP address of the host
+ip_address="10.0.0.1" 
 
 #### Source for cloudflare auth - API key, email and zone ID
 source .sec_env.sh
@@ -24,7 +28,7 @@ for b in $(wget -q "${sitemap}" -O - | grep '^\s*<loc>' | sed 's/^\s*<loc>\(.*\)
         --data "{\"files\":[\"${b}\"]}"
     for i in $(wget -q "${b}" -O - | grep '^\s*<loc>' | sed 's/^\s*<loc>\(.*\)<\/loc>/\1/'); do
         sleep .3
-        curl --silent "${i}" > /dev/null 2>&1 &
+        curl --silent --resolve ${domain}:443:${ip_address} "${i}" > /dev/null 2>&1 &
     done
 done
 
